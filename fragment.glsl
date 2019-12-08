@@ -1,46 +1,43 @@
 precision mediump float;
 
 varying vec3 fNormal;
-varying vec3 fColor;
 varying vec3 fPosition;
 varying vec2 fTexCoord;
 
-uniform vec3 diffuseColor;
-uniform vec3 diffusePosition; // Titik sumber cahaya
+uniform vec3 lightColor;
+uniform vec3 lightPosition;
 uniform vec3 ambientColor;
+uniform mat4 view;
 
 uniform sampler2D sampler0;
 
 void main() {
 
-  // Arah cahaya = lokasi titik verteks - lokasi titik sumber cahaya
-  vec3 diffuseDirection = normalize(diffusePosition - fPosition);
-  // Nilai intensitas cahaya = 
-  //  nilai COS sudut antara arah datang cahaya dengan arah vektor normal =
-  //  dot product dari vektor arah datang cahaya • arah vektor normal
-  float normalDotLight = max(dot(fNormal, diffuseDirection), 0.0);
+  vec4 tex0 = texture2D(sampler0, fTexCoord); // Hasil akhirnya adalah warna (RGBA)
 
-  float specularPower = 120.0;
+  vec3 normal = normalize(fNormal);
+
+  vec3 lightDirection = normalize(vec3(view *  vec4(lightPosition, 1)) - fPosition);
+  float dotLight = dot(lightDirection, -normal);
+  float lightIntensity = max(dotLight, 0.0);
+  vec3 ambient = ambientColor * tex0.rgb;
+  
+  float specularPower = 10.0;
   float specular = 0.0;
 
-  if (normalDotLight > 0.0) {
+  if (lightIntensity > 0.0) {
     // viewing vector
     vec3 viewVec = vec3(0,0,1.0);
 
     // reflective vector
-    vec3 reflectVec = reflect(-diffuseDirection, fNormal);
+    vec3 reflectVec = reflect(-lightDirection, normal);
 
     // determine the specularFactor based on the dot product of viewing and reflective,
     // taking at least a minimum of 0.0
     float specularFactor = max(dot(reflectVec, viewVec), 0.0);
     specular = pow(specularFactor, specularPower);
   }
+  vec3 diffuse = lightColor * tex0.rgb * lightIntensity + specular;
 
-  // Untuk mendapatkan nilai warna (RGBA) dari tekstur
-  vec4 textureColor = texture2D(sampler0, fTexCoord);
-
-  vec3 diffuse = diffuseColor * textureColor.rgb * normalDotLight;
-  vec3 ambient = ambientColor * textureColor.rgb;
-
-  gl_FragColor = vec4(diffuse + ambient + fColor + specular, 1.0);
+  gl_FragColor = vec4(diffuse + ambient, 1.0);
 }

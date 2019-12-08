@@ -2,29 +2,26 @@ precision mediump float;
 
 attribute vec3 vPosition;
 attribute vec3 vNormal;
-attribute vec3 vColor;
 attribute vec2 vTexCoord;
 
-varying vec3 fNormal;
-varying vec3 fColor;
-varying vec3 fPosition;
 varying vec2 fTexCoord;
+varying vec3 fPosition;
+varying vec3 fNormal;
 
-uniform mat4 modelMatrix;
-uniform mat4 viewMatrix;
-uniform mat4 projectionMatrix;
-uniform mat3 normalMatrix;  // Berperan sebagai modelMatrix-nya vektor normal
+uniform mat4 projection;
+uniform mat4 view;
+uniform mat4 model;
+uniform mat4 MVPMatrix;
+
+uniform mat3 normalMatrix;
 
 void main() {
-  gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(vPosition, 1.0);
+  
+  gl_Position = MVPMatrix * vec4(vPosition, 1.0);
+  // urutan perkaliannya harus = projection x view x model (transformasi)
 
-  // Transfer koordinat tekstur ke fragment shader
   fTexCoord = vTexCoord;
-  fColor = vColor;
-
-  // Transfer vektor normal (yang telah ditransformasi) ke fragment shader
-  fNormal = normalize(normalMatrix * vNormal);
-
-  // Transfer posisi verteks
-  fPosition = vPosition;
+  fPosition = vec3( view * model * vec4(vPosition, 1.0));
+  fNormal = normalMatrix * vNormal;
 }
+ 
